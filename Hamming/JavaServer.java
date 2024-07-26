@@ -112,14 +112,17 @@ public class JavaServer {
             System.out.println("Mensaje con error: " + messageEncoded);
             
             // Agregar error adicional en posición aleatoria
-            // rand = new Random();
-            // randPos = rand.nextInt(messageEncoded.length());
+            int randPos2 = rand.nextInt(messageEncoded.length());
 
-            // errorBit = (messageEncoded.charAt(randPos) == '0') ? '1' : '0';
-            // messageEncoded = messageEncoded.substring(0, randPos) + errorBit + messageEncoded.substring(randPos+1);
+            while (randPos == randPos2){
+                randPos2 = rand.nextInt(messageEncoded.length());
+            }
 
-            // System.out.println("Se ha agregado un error en la posición: " + (randPos+1));
-            // System.out.println("Mensaje con error: " + messageEncoded);
+            errorBit = (messageEncoded.charAt(randPos2) == '0') ? '1' : '0';
+            messageEncoded = messageEncoded.substring(0, randPos2) + errorBit + messageEncoded.substring(randPos2+1);
+
+            System.out.println("Se ha agregado un error en la posición: " + (randPos2+1));
+            System.out.println("Mensaje con error: " + messageEncoded);
 
             out.println(messageEncoded);
         } catch (IOException e) {
