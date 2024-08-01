@@ -1,66 +1,37 @@
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
-import java.util.Scanner;
 import java.util.Arrays;
 import java.util.Random;
 
 public class Server {
 
-    public static double errorProbability = 1 / 100;
+    public static double errorProbability = 0.01;
+
+    public static String textToBinary(String text) {
+        StringBuilder binary = new StringBuilder();
+        for (char c : text.toCharArray()) {
+            binary.append(String.format("%8s", Integer.toBinaryString(c)).replaceAll(" ", "0"));
+        }
+        return binary.toString();
+    }
 
     public static String applyNoise(String encodedMessage, double errorProbability) {
-        boolean error = false;
         Random rand = new Random();
         char[] noisyMessage = encodedMessage.toCharArray();
+        boolean error = false;
         for (int i = 0; i < noisyMessage.length; i++) {
             if (rand.nextDouble() < errorProbability) {
+                noisyMessage[i] = (noisyMessage[i] == '0') ? '1' : '0';
                 error = true;
-                noisyMessage[i] = (noisyMessage[0] == '0') ? '1' : '0';
             }
         }
-
-        if (error)
-            System.out.println("Se han añadido errores al mensaje.");
-
+        if (error) {
+            System.out.println("MENSAJE CON UN ERROR");
+        } else {
+            System.out.println("MENSAJE SIN ERRORES");
+        }
         return new String(noisyMessage);
-    }
-
-    public static String validateBinary(Scanner scan) {
-
-        String binaryNumber;
-
-        while (true) {
-            System.out.print("Ingrese el mensaje a enviar: ");
-            binaryNumber = scan.nextLine();
-
-            if (!binaryNumber.matches("[01]+")) {
-                System.out.println("Entrada inválida. Por favor, ingrese solo 0s y 1s.");
-            } else {
-                break;
-            }
-        }
-
-        return binaryNumber;
-    }
-
-    public static int validateInt(Scanner scan, String menu, int max, boolean zero) {
-
-        String option;
-
-        while (true) {
-            System.out.print(menu);
-            option = scan.nextLine();
-
-            if (!option.matches("[0-9]+"))
-                System.out.println("Debe ingresar un número entero.");
-            else if (Integer.valueOf(option) > max || (zero && Integer.valueOf(option) == 0))
-                System.out.println("Opción no válida.");
-            else
-                break;
-        }
-
-        return Integer.valueOf(option);
     }
 
     public static int[] decompose(int position, int r) {
@@ -95,18 +66,6 @@ public class Server {
         }
 
         return (counter % 2 == 0) ? '0' : '1';
-    }
-
-    public static String choiceAlgorithm(int option, String message) {
-        switch (option) {
-            case 1:
-                return 'H' + applyNoise(hammingEncoding(message), errorProbability);
-            case 2:
-                return 'F' + applyNoise(fletcherEncoding(message), errorProbability);
-            default:
-                System.out.println("Opción no válida.");
-                return null;
-        }
     }
 
     public static String hammingEncoding(String message) {
@@ -156,53 +115,40 @@ public class Server {
 
         byte[] messageBytes = message.getBytes(StandardCharsets.UTF_8);
         int checksum = fletcher16(messageBytes);
-        String messageEncoded = message + String.format("%04x", checksum);
-        System.out.println("Mensaje con checksum: " + messageEncoded);
-
-        return messageEncoded;
+        return message + String.format("%04x", checksum);
     }
 
     public static void main(String[] args) {
-        Scanner scan = new Scanner(System.in);
         int port = 12345;
-        boolean repeat = true;
 
         try (ServerSocket serverSocket = new ServerSocket(port);
-                Socket clientSocket = serverSocket.accept();
-                PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true)) {
+             Socket clientSocket = serverSocket.accept();
+             BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+             PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true)) {
 
-            while (repeat) {
+            String message;
+            Random rand = new Random();
+            while ((message = in.readLine()) != null) {
+                System.out.println("Mensaje recibido: " + message);
+                String binaryMessage = textToBinary(message);
 
-                String binaryNumber = validateBinary(scan);
-
-                String messageEncoded = null;
-
-                while (messageEncoded == null) {
-                    int option = validateInt(scan, """
-                            Selecciona el algoritmo a utilizar:
-                                1. Hamming.
-                                2. Fletcher.
-                            """, 2, false);
-                    messageEncoded = choiceAlgorithm(option, binaryNumber);
+                String encodedMessage;
+                String finalMessage;
+                if (rand.nextBoolean()) {
+                    encodedMessage = hammingEncoding(binaryMessage);
+                    finalMessage = 'H' + applyNoise(encodedMessage, errorProbability);
+                    System.out.println("SE USA Hamming");
+                } else {
+                    encodedMessage = fletcherEncoding(binaryMessage);
+                    finalMessage = 'F' + applyNoise(encodedMessage, errorProbability);
+                    System.out.println("SE USA Fletcher");
                 }
 
-                System.out.println("Mensaje codificado: " + messageEncoded);
-                out.println(messageEncoded);
-
-                int option = validateInt(scan, """
-                        ¿Desea enviar un nuevo mensaje?
-                        1. Sí
-                        2. No
-                        """, 2, false);
-
-                if (option == 2)
-                    repeat = false;
-
+                System.out.println("Mensaje codificado: " + finalMessage);
+                out.println(finalMessage);
             }
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
-            scan.close();
         }
     }
 }

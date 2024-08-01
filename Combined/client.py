@@ -39,7 +39,6 @@ def fletcherDecoding(encoded):
     receivedChecksum = int(encoded[-4:], 16)
     message = encoded[:-4]
     
-    # Determinar el tamaño del bloque y aplicar padding si es necesario
     if len(message) % 32 == 0:
         block_size = 32
     elif len(message) % 16 == 0:
@@ -48,8 +47,6 @@ def fletcherDecoding(encoded):
         block_size = 8
     
     message = pad_message(message, block_size)
-    
-    # Calcular checksum del mensaje recibido con padding
     message_bytes = message.encode('utf-8')
     calculatedChecksum = fletcher16(message_bytes)
     
@@ -59,12 +56,11 @@ def fletcherDecoding(encoded):
         return "El mensaje contiene errores."
 
 def hammingDecoding(encoded):
-    print("encoded: ", encoded)
     r = 0
     while 2 ** r < len(encoded):
         r += 1
         
-    while True: # Intentará evaluar y corregir todos los errores posibles
+    while True:
         parityBits = [encoded[2 ** i - 1] for i in range(r)]
         errors = []
         
@@ -76,12 +72,9 @@ def hammingDecoding(encoded):
             errPos = int("".join(errors), 2)
             if(errPos >= len(encoded)):
                 errPos = len(encoded)
-            print("errPos: ",errPos)
             prevState = encoded[errPos - 1]
             correctedBit = '0' if prevState == '1' else '1'
             encoded = encoded[:errPos - 1] + correctedBit + encoded[errPos:]
-            print(f"Error en posición {errPos}. Se corrigió de '{prevState}' a '{correctedBit}'.")
-            print(f"Mensaje corregido: {encoded}")
         else:
             break
             
@@ -92,6 +85,10 @@ def hammingDecoding(encoded):
         decoded.append(encoded[i])
     
     return "".join(decoded)
+
+def binaryToText(binary):
+    message = ''.join([chr(int(binary[i:i+8], 2)) for i in range(0, len(binary), 8)])
+    return message
 
 def detectAlgorithm(encodedMessage):
     algorithm = encodedMessage[0]
@@ -115,15 +112,18 @@ def receiveMessage():
                     receivedMessage = s.recv(1024).decode('utf-8').strip()
                     if not receivedMessage:
                         break
-                    print("Mensaje recibido:", receivedMessage)
+                    print("Mensaje recibido (codificado):", receivedMessage)
                     
                     decodedMessage = detectAlgorithm(receivedMessage)
-                    if decodedMessage == None:
+                    if decodedMessage is None:
                         print("Error al intentar decodificar mensaje: Algoritmo no reconocido.")
                     elif decodedMessage[0] == 0:
-                        print("Mensaje decodificado:", decodedMessage[1])
+                        decodedText = binaryToText(decodedMessage[1])
+                        print("Mensaje decodificado (texto):", decodedText)
+                        print("SE USA Hamming")
                     else:
-                        print(decodedMessage[1])
+                        print("Mensaje decodificado:", decodedMessage[1])
+                        print("SE USA Fletcher")
                 except (ConnectionResetError, ConnectionAbortedError):
                     print("Error de conexión con el servidor.")
                     break
