@@ -7,6 +7,28 @@ import java.util.Random;
 
 public class Server {
 
+    public static double errorProbability = 1 / 100;
+
+    public static String applyNoise(String encodedMessage, double errorProbability) {
+        boolean error = false;
+        Random rand = new Random();
+        char[] noisyMessage = encodedMessage.toCharArray();
+        for (int i = 0; i < noisyMessage.length; i++) {
+            if (rand.nextDouble() < errorProbability) {
+                error = true;
+                noisyMessage[i] = (noisyMessage[0] == '0') ? '1' : '0';
+            }
+        }
+
+        if (error)
+            System.out.println("Se han añadido errores al mensaje.");
+
+        System.out.println("original: " + encodedMessage);
+        System.out.println("nuevo: " + new String(noisyMessage));
+
+        return new String(noisyMessage);
+    }
+
     public static String validateBinary(Scanner scan) {
 
         String binaryNumber;
@@ -81,9 +103,9 @@ public class Server {
     public static String choiceAlgorithm(int option, String message) {
         switch (option) {
             case 1:
-                return hammingEncoding(message);
+                return 'H' + applyNoise(hammingEncoding(message), 1.0 / message.length());
             case 2:
-                return fletcherEncoding(message);
+                return 'F' + applyNoise(fletcherEncoding(message), 1.0 / message.length());
             default:
                 System.out.println("Opción no válida.");
                 return null;
