@@ -72,10 +72,9 @@ def hammingDecoding(encoded):
             parity = getParity(2 ** i, r, encoded)
             errors.insert(0, '1' if parity != parityBits[i] else '0')
         
-        # Revisar este error, a veces indica que hay error en posiciones que no existen.
         if "1" in errors:
             errPos = int("".join(errors), 2)
-            if(errPos >= len(encoded)):    # Se agregó esto para que, si se indica error en una posición que no existe, cambiarlo a la última posición.
+            if(errPos >= len(encoded)):
                 errPos = len(encoded)
             print("errPos: ",errPos)
             prevState = encoded[errPos - 1]

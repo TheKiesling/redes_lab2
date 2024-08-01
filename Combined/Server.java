@@ -23,9 +23,6 @@ public class Server {
         if (error)
             System.out.println("Se han añadido errores al mensaje.");
 
-        System.out.println("original: " + encodedMessage);
-        System.out.println("nuevo: " + new String(noisyMessage));
-
         return new String(noisyMessage);
     }
 
@@ -103,9 +100,9 @@ public class Server {
     public static String choiceAlgorithm(int option, String message) {
         switch (option) {
             case 1:
-                return 'H' + applyNoise(hammingEncoding(message), 1.0 / message.length());
+                return 'H' + applyNoise(hammingEncoding(message), errorProbability);
             case 2:
-                return 'F' + applyNoise(fletcherEncoding(message), 1.0 / message.length());
+                return 'F' + applyNoise(fletcherEncoding(message), errorProbability);
             default:
                 System.out.println("Opción no válida.");
                 return null;
