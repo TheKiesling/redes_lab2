@@ -59,10 +59,17 @@ def receiveMessage():
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((host, port))
-            receivedMessage = s.recv(1024).decode('utf-8').strip()
-            print("Mensaje recibido:", receivedMessage)
-            decodedMessage = hammingDecoding(receivedMessage)
-            print("Mensaje decodificado:", decodedMessage)
+            while True:
+                try:
+                    receivedMessage = s.recv(1024).decode('utf-8').strip()
+                    if not receivedMessage:
+                        break
+                    print("Mensaje recibido:", receivedMessage)
+                    decodedMessage = hammingDecoding(receivedMessage)
+                    print("Mensaje decodificado:", decodedMessage)
+                except (ConnectionResetError, ConnectionAbortedError):
+                    print("Error de conexión con el servidor.")
+                    break
     except ConnectionRefusedError:
         print("Conexión rechazada")
 
