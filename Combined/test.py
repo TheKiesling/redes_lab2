@@ -3,21 +3,20 @@ import socket
 import time
 import random
 import string
+import pandas as pd
+import matplotlib.pyplot as plt
 
 def start_server():
-    # Compila y ejecuta el servidor Java
     subprocess.run(["javac", "Server.java"])
     server_process = subprocess.Popen(["java", "Server"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    time.sleep(1)  # Da tiempo para que el servidor se inicie
+    time.sleep(1)
     return server_process
 
 def stop_server(server_process):
-    # Termina el proceso del servidor
     server_process.terminate()
     server_process.wait()
 
 def generate_random_message(length):
-    # Genera un mensaje aleatorio de una longitud especificada
     return ''.join(random.choice(string.ascii_lowercase) for _ in range(length))
 
 def binary_to_text(binary):
@@ -98,51 +97,78 @@ def decompose(position, r):
 def send_messages_to_server(messages):
     host = 'localhost'
     port = 12345
+    results = []
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((host, port))
             for message in messages:
                 s.sendall((message + '\n').encode('utf-8'))
-                print(f"Mensaje enviado: {message}")
                 response = s.recv(1024).decode('utf-8').strip()
-                print(f"Mensaje recibido (codificado): {response}")
+                
+                result = {
+                    'original_message': message,
+                    'encoded_message': response,
+                    'algorithm': '',
+                    'error': False
+                }
                 
                 if response[0] == 'H':
+                    result['algorithm'] = 'Hamming'
                     decoded_binary = decode_hamming(response[1:])
                     decoded_message = binary_to_text(decoded_binary)
-                    print(f"Mensaje decodificado (texto): {decoded_message}")
-                    print("SE USA Hamming")
-                    if response[1:] != decoded_binary:
-                        print("MENSAJE CON UN ERROR")
-                    else:
-                        print("MENSAJE SIN ERRORES")
+                    result['decoded_message'] = decoded_message
+                    result['error'] = response[1:] != decoded_binary
                 elif response[0] == 'F':
+                    result['algorithm'] = 'Fletcher'
                     decoded_message, error = decode_fletcher(response[1:])
-                    print(f"Mensaje decodificado (texto): {decoded_message}")
-                    print("SE USA Fletcher")
-                    if error:
-                        print("MENSAJE CON UN ERROR")
-                    else:
-                        print("MENSAJE SIN ERRORES")
+                    result['decoded_message'] = decoded_message
+                    result['error'] = error
                 else:
-                    print("Algoritmo no reconocido")
+                    result['algorithm'] = 'Unknown'
                 
-                print("-" * 40)
+                results.append(result)
     except ConnectionRefusedError:
         print("Conexión rechazada")
     except Exception as e:
         print(f"Error: {e}")
+    
+    return results
 
 def main():
-    messages = [generate_random_message(10) for _ in range(5)]
-    print("Generated Messages:", messages)
-    
+    num_tests = 1000
+    message_length = 10
+
+    messages = [generate_random_message(message_length) for _ in range(num_tests)]
+
     server_process = start_server()
     
-    try:
-        send_messages_to_server(messages)
-    finally:
-        stop_server(server_process)
+    results = send_messages_to_server(messages)
+    stop_server(server_process)
+    
+    df = pd.DataFrame(results)
+    
+    df.to_csv('results.csv', index=False)
+    
+    error_counts = df['error'].value_counts()
+    algorithms = df['algorithm'].value_counts()
+
+    plt.figure(figsize=(12, 6))
+
+    plt.subplot(1, 2, 1)
+    error_counts.plot(kind='bar')
+    plt.title('Errores detectados')
+    plt.xlabel('Error')
+    plt.ylabel('Cantidad')
+
+    plt.subplot(1, 2, 2)
+    algorithms.plot(kind='bar')
+    plt.title('Algoritmos utilizados')
+    plt.xlabel('Algoritmo')
+    plt.ylabel('Cantidad')
+
+    plt.tight_layout()
+    plt.show()
+
 
 if __name__ == "__main__":
     main()
