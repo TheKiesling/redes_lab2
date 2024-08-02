@@ -8,6 +8,22 @@ public class Server {
 
     public static double errorProbability = 0.01;
 
+    private static String parseJsonValue(String jsonString, String key) {
+        String pattern = "\"" + key + "\":([^,}\\]]*)";
+        java.util.regex.Pattern r = java.util.regex.Pattern.compile(pattern);
+        java.util.regex.Matcher m = r.matcher(jsonString);
+    
+        if (m.find()) {
+            String value = m.group(1).trim();
+            if (value.startsWith("\"") && value.endsWith("\"")) {
+                return value.substring(1, value.length() - 1);
+            }
+            return value;
+        }
+        return null;
+    }
+    
+
     public static String textToBinary(String text) {
         StringBuilder binary = new StringBuilder();
         for (char c : text.toCharArray()) {
@@ -122,13 +138,16 @@ public class Server {
         int port = 12345;
 
         try (ServerSocket serverSocket = new ServerSocket(port);
-             Socket clientSocket = serverSocket.accept();
-             BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-             PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true)) {
+                Socket clientSocket = serverSocket.accept();
+                BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true)) {
 
             String message;
+            String receivedData;
             Random rand = new Random();
-            while ((message = in.readLine()) != null) {
+            while ((receivedData = in.readLine()) != null) {
+                message = parseJsonValue(receivedData, "message");
+
                 System.out.println("Mensaje recibido: " + message);
                 String binaryMessage = textToBinary(message);
 

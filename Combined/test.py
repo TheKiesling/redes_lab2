@@ -5,6 +5,9 @@ import random
 import string
 import pandas as pd
 import matplotlib.pyplot as plt
+import json
+import numpy as np
+from collections import Counter
 
 def start_server():
     subprocess.run(["javac", "Server.java"])
@@ -94,22 +97,35 @@ def decompose(position, r):
             position -= power
     return components
 
-def send_messages_to_server(messages):
+def send_messages_to_server(messages, probabilities):
     host = 'localhost'
     port = 12345
     results = []
+    
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((host, port))
             for message in messages:
-                s.sendall((message + '\n').encode('utf-8'))
+                
+                error_probability = probabilities[random.randint(0, len(probabilities)-1)]
+                
+                data = {
+                    "message": message,
+                    "probability": error_probability
+                }
+                
+                serialized_data = json.dumps(data).encode('utf-8')
+                
+                s.sendall(serialized_data+ b'\n')
+                #s.sendall((message + '\n').encode('utf-8'))
                 response = s.recv(1024).decode('utf-8').strip()
                 
                 result = {
                     'original_message': message,
                     'encoded_message': response,
                     'algorithm': '',
-                    'error': False
+                    'error': False,
+                    'probability': error_probability
                 }
                 
                 if response[0] == 'H':
@@ -127,6 +143,8 @@ def send_messages_to_server(messages):
                     result['algorithm'] = 'Unknown'
                 
                 results.append(result)
+                
+            s.close()
     except ConnectionRefusedError:
         print("Conexión rechazada")
     except Exception as e:
@@ -136,13 +154,14 @@ def send_messages_to_server(messages):
 
 def main():
     num_tests = 1000
-    message_length = 10
+    error_probabilities = [1./100, 1./75, 1./50, 1./25]
+    # message_length = 10
 
-    messages = [generate_random_message(message_length) for _ in range(num_tests)]
+    messages = [generate_random_message(random.randint(10,100)) for _ in range(num_tests)]
 
     server_process = start_server()
     
-    results = send_messages_to_server(messages)
+    results = send_messages_to_server(messages, error_probabilities)
     stop_server(server_process)
     
     df = pd.DataFrame(results)
@@ -167,6 +186,25 @@ def main():
     plt.ylabel('Cantidad')
 
     plt.tight_layout()
+    plt.show()
+    
+    fig, ax = plt.subplots(figsize=(10, 6))
+    width = 0.25
+
+    x = np.arange(len(error_probabilities))
+    
+    frequencies = df['algorithm'].value_counts().to_dict()
+
+    for i, (algorithm, frequencies) in enumerate(frequencies.items()):
+        ax.bar(x + i*width, frequencies, width, label=algorithm)
+
+    ax.set_xlabel('Probabilidad de Error')
+    ax.set_ylabel('Frecuencia de Errores')
+    ax.set_title('Frecuencia de Errores según Algoritmo y Probabilidad de Error')
+    ax.set_xticks(x + width)
+    ax.set_xticklabels(error_probabilities)
+    ax.legend()
+
     plt.show()
 
 
