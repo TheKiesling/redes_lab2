@@ -5,38 +5,30 @@ Este proyecto implementa técnicas de detección y corrección de errores utiliz
 ## Estructura del Proyecto
 
 ### Servidor (Java)
-- **`JavaServer.java`**: Código del servidor que envía mensajes codificados con checksum de Fletcher-16 y Hamming.
+- **`Server.java`**: Código del servidor que envía mensajes codificados con checksum de Fletcher-16 y Hamming.
 
 ### Cliente (Python)
 - **`client.py`**: Código del cliente que recibe el mensaje y verifica si hay errores.
+
+### Cliente de pruebas (Python)
+- **`test.py`**: Código que permite realizar consultas masivas al servidor para verificar el funcionamiento de ambos algoritmos.
 
 ## Requisitos
 
 - **Java 8 o superior**
 - **Python 3.x**
 
-## Uso
-
-### Ir al algoritmo que se desea utilizar
-
-1. **Fletcher**:
-   ```bash
-   cd Fletcher
-   ```
-2. **Hamming**:
-   ```bash
-    cd Hamming
-    ```
+## Uso del cliente
 
 ### Ejecutar el Servidor
 
 1. **Compilar el código Java**:
    ```bash
-   javac JavaServer.java
+   javac Server.java
    ```
 2. **Ejecutar el servidor**:
    ```bash
-    java JavaServer
+    java Server
     ```
 3. **Introducir el mensaje binario**:
     ```bash
@@ -44,8 +36,35 @@ Este proyecto implementa técnicas de detección y corrección de errores utiliz
      1010101010101010
      ```
 
+3. **Seleccionar el algoritmo a utilizar**:
+    ```bash
+     Selecciona el algoritmo a utilizar:
+     1. Hamming.
+     2. Fletcher.
+     1
+     ```
+
 ### Ejecutar el Cliente
 1. **Ejecutar el cliente**:
    ```bash
-   python pythonScript.py
+   python client.py
+   ```
+
+## Uso del entorno de pruebas
+
+### Ejecutar el Servidor
+
+1. **Compilar el código Java**:
+   ```bash
+   javac Server.java
+   ```
+2. **Ejecutar el servidor**:
+   ```bash
+    java Server
+    ```
+
+### Ejecutar el Cliente de pruebas
+1. **Ejecutar el cliente**:
+   ```bash
+   python test.py
    ```
