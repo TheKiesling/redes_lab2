@@ -154,7 +154,7 @@ def send_messages_to_server(messages, probabilities):
     return results
 
 def main():
-    num_tests = 1000
+    num_tests = 100000
     error_probabilities = [1./100, 1./75, 1./50, 1./25]
     # message_length = 10
 
