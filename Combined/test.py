@@ -125,7 +125,8 @@ def send_messages_to_server(messages, probabilities):
                     'encoded_message': response,
                     'algorithm': '',
                     'error': False,
-                    'probability': error_probability
+                    'probability': error_probability,
+                    'length': len(message)
                 }
                 
                 if response[0] == 'H':
@@ -188,25 +189,33 @@ def main():
     plt.tight_layout()
     plt.show()
     
-    fig, ax = plt.subplots(figsize=(10, 6))
-    width = 0.25
+    fig, ax = plt.subplots(figsize=(12, 8))
 
-    x = np.arange(len(error_probabilities))
+    labels = df["probability"].value_counts().index
+    x = np.arange(len(labels))
+    data = [df[df["probability"] == label]["algorithm"].value_counts() for label in labels]
+    all_values = sorted(set(value for freq in data for value in freq.index))
     
-    frequencies = df['algorithm'].value_counts().to_dict()
+    data_filled = []
+    for freq in data:
+        row = [freq.get(val, 0) for val in all_values]
+        data_filled.append(row)
+    
+    width = 0.8 / len(all_values)
 
-    for i, (algorithm, frequencies) in enumerate(frequencies.items()):
-        ax.bar(x + i*width, frequencies, width, label=algorithm)
+    for i, value in enumerate(all_values):
+        bars = [data_filled[j][i] for j in range(len(labels))]
+        ax.bar(x + i * width, bars, width=width, label=f'{value}')
 
-    ax.set_xlabel('Probabilidad de Error')
+    ax.set_xlabel("probability")
     ax.set_ylabel('Frecuencia de Errores')
     ax.set_title('Frecuencia de Errores según Algoritmo y Probabilidad de Error')
-    ax.set_xticks(x + width)
-    ax.set_xticklabels(error_probabilities)
-    ax.legend()
+    ax.set_xticks(x + width * (len(all_values) - 1) / 2)
+    ax.set_xticklabels(labels, rotation=0)
+    ax.legend(title="Algoritmo")
 
+    plt.tight_layout()
     plt.show()
-
 
 if __name__ == "__main__":
     main()
