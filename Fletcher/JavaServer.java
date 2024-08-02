@@ -56,13 +56,13 @@ public class JavaServer {
             System.out.println("Mensaje con checksum: " + messageEncoded);
 
             // Introducción de un error en una posición aleatoria
-            Random rand = new Random();
-            int randPos = rand.nextInt(messageEncoded.length() - 4); // Evita el checksum
-            char errorBit = (messageEncoded.charAt(randPos) == '0') ? '1' : '0';
-            messageEncoded = messageEncoded.substring(0, randPos) + errorBit + messageEncoded.substring(randPos+1);
+            // Random rand = new Random();
+            // int randPos = rand.nextInt(messageEncoded.length() - 4); // Evita el checksum
+            // char errorBit = (messageEncoded.charAt(randPos) == '0') ? '1' : '0';
+            // messageEncoded = messageEncoded.substring(0, randPos) + errorBit + messageEncoded.substring(randPos+1);
 
-            System.out.println("Se ha agregado un error en la posición: " + (randPos + 1));
-            System.out.println("Mensaje con error: " + messageEncoded);
+            // System.out.println("Se ha agregado un error en la posición: " + (randPos + 1));
+            // System.out.println("Mensaje con error: " + messageEncoded);
 
             out.println(messageEncoded);
         } catch (IOException e) {
